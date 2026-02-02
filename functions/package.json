@@ -1,0 +1,12 @@
+{
+  "name": "netlify-functions",
+  "version": "1.0.0",
+  "description": "Netlify Functions for Route Optimizer",
+  "main": "dispatch.mjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@netlify/functions": "^2.0.0"
+  }
+}
