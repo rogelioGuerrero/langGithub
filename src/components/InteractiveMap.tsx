@@ -143,31 +143,71 @@ export function InteractiveMap({ onPointsChange, onVehiclesChange, routeResult, 
     const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6']
 
     // Draw routes
-    routeResult.vehicles.forEach((vehicle, idx) => {
+    routeResult.vehicles.forEach(async (vehicle, idx) => {
       const color = colors[idx % colors.length]
-      const coords = vehicle.stops.map(s => [s.lat, s.lon] as [number, number])
-
-      if (coords.length > 1) {
-        window.L.polyline(coords, {
-          color,
-          weight: 4,
-          opacity: 0.8,
-          smoothFactor: 1
-        }).addTo(map)
-
-        // Add arrows to show direction
-        for (let i = 0; i < coords.length - 1; i++) {
-          const midpoint = [
-            (coords[i][0] + coords[i + 1][0]) / 2,
-            (coords[i][1] + coords[i + 1][1]) / 2
-          ]
+      const stops = vehicle.stops
+      
+      // Get real routes between each pair of points
+      for (let i = 0; i < stops.length - 1; i++) {
+        const start = stops[i]
+        const end = stops[i + 1]
+        
+        try {
+          // Get real route from ORS Directions API
+          const routeUrl = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjFmZTAxMmU1MDk1NzRmMTY5NTJjM2U5Nzc4NDlhM2M2IiwiaCI6Im11cm11cjY0In0=&start=${start.lon},${start.lat}&end=${end.lon},${end.lat}`
           
-          window.L.marker(midpoint, {
-            icon: window.L.divIcon({
-              className: 'text-white',
-              html: `<div style="color: ${color}; font-size: 16px;">➤</div>`,
-              iconSize: [20, 20]
-            })
+          const resp = await fetch(routeUrl)
+          if (resp.ok) {
+            const data = await resp.json()
+            const coordinates = data.features[0].geometry.coordinates
+            
+            // Convert to Leaflet format [lat, lon]
+            const latlngs = coordinates.map((coord: number[]) => [coord[1], coord[0]] as [number, number])
+            
+            // Draw the real route
+            window.L.polyline(latlngs, {
+              color,
+              weight: 4,
+              opacity: 0.8,
+              smoothFactor: 1
+            }).addTo(map)
+            
+            // Add direction arrow at midpoint
+            if (latlngs.length > 1) {
+              const midIndex = Math.floor(latlngs.length / 2)
+              const midpoint = latlngs[midIndex]
+              
+              window.L.marker(midpoint, {
+                icon: window.L.divIcon({
+                  className: 'text-white',
+                  html: `<div style="color: ${color}; font-size: 16px; text-shadow: 0 0 3px black;">➤</div>`,
+                  iconSize: [20, 20]
+                })
+              }).addTo(map)
+            }
+          } else {
+            // Fallback to straight line
+            window.L.polyline([
+              [start.lat, start.lon],
+              [end.lat, end.lon]
+            ], {
+              color,
+              weight: 4,
+              opacity: 0.8,
+              dashArray: '10, 10'  // Dashed line for fallback
+            }).addTo(map)
+          }
+        } catch (error) {
+          console.error('Error getting route:', error)
+          // Fallback to straight line
+          window.L.polyline([
+            [start.lat, start.lon],
+            [end.lat, end.lon]
+          ], {
+            color,
+            weight: 4,
+            opacity: 0.8,
+            dashArray: '10, 10'
           }).addTo(map)
         }
       }
