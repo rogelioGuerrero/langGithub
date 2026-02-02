@@ -19,12 +19,31 @@ type ResultResponse = {
 }
 
 function toPayload(depot: Depot, vehicles: Vehicle[], orders: Order[]) {
+  const now = new Date()
+  const defaultDateTime = (dateStr: string) => {
+    if (!dateStr) {
+      const d = new Date(now)
+      d.setHours(9, 0, 0, 0)
+      return d.toISOString()
+    }
+    return dateStr
+  }
+
+  const defaultEndDateTime = (dateStr: string) => {
+    if (!dateStr) {
+      const d = new Date(now)
+      d.setHours(17, 0, 0, 0)
+      return d.toISOString()
+    }
+    return dateStr
+  }
+
   return {
     depot: {
       lat: parseFloat(depot.lat),
       lon: parseFloat(depot.lon),
-      ventana_inicio: depot.ventana_inicio,
-      ventana_fin: depot.ventana_fin,
+      ventana_inicio: defaultDateTime(depot.ventana_inicio),
+      ventana_fin: defaultEndDateTime(depot.ventana_fin),
     },
     vehicles: vehicles.map(v => ({
       id_vehicle: v.id_vehicle,
@@ -38,8 +57,8 @@ function toPayload(depot: Depot, vehicles: Vehicle[], orders: Order[]) {
       lon: parseFloat(o.lon),
       peso: parseFloat(o.peso) || 0,
       volumen: parseFloat(o.volumen) || 0,
-      ventana_inicio: o.ventana_inicio,
-      ventana_fin: o.ventana_fin,
+      ventana_inicio: defaultDateTime(o.ventana_inicio),
+      ventana_fin: defaultEndDateTime(o.ventana_fin),
       skills_required: o.skills_required ? o.skills_required.split(',').map(s => s.trim()).filter(Boolean) : [],
     })),
   }
