@@ -159,6 +159,7 @@ def solve_optimization_node(state: OptimizerState) -> OptimizerState:
                 capacity_volume=int(round(float(v["capacity_volume"]) * 1000)),
                 skills=list(v.get("skills") or []),
             )
+        )
 
     service_time_seconds = int(os.environ.get("SERVICE_TIME_SECONDS", "0"))
     time_limit_seconds = int(os.environ.get("SOLVER_TIME_LIMIT_SECONDS", "30"))

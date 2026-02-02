@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card'
 import { DepotForm, type Depot } from './components/DepotForm'
 import { OrderForm, type Order } from './components/OrderForm'
 import { VehicleForm, type Vehicle } from './components/VehicleForm'
+import { RouteMap } from './components/RouteMap'
 
 type DispatchResponse = {
   pending_route_id: string
@@ -224,6 +225,20 @@ export default function App() {
               </pre>
             </CardContent>
           </Card>
+
+          {result?.found && result.result && typeof result.result === 'object' && 'vehicles' in result.result && (
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle>Mapa de Rutas</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <RouteMap 
+                  routes={(result.result as any).vehicles || []} 
+                  depot={{ lat: parseFloat(depot.lat), lon: parseFloat(depot.lon) }} 
+                />
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader>

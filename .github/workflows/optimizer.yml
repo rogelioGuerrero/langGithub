@@ -32,4 +32,4 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           PENDING_ROUTE_ID: ${{ github.event.client_payload.pending_route_id }}
         run: |
-          python -m backend.optimizer
+          python -m backend.optimizer_simple
