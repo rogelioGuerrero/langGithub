@@ -66,7 +66,8 @@ export async function handler(event) {
     return json(405, { error: 'Method Not Allowed' })
   }
 
-  const payload = JSON.parse(event.body || '{}').payload
+  const body = JSON.parse(event.body || '{}')
+  const payload = body.payload || body  // Accept both formats
   if (!payload) return json(400, { error: 'payload is required' })
 
   const pool = await getPool()
