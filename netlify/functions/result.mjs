@@ -36,8 +36,10 @@ export async function handler(event) {
     return json(405, { error: 'Method Not Allowed' })
   }
 
-  const id = event.queryStringParameters?.id
+  const { id } = event.queryStringParameters
   if (!id) return json(400, { error: 'id is required' })
+
+  console.log(`Fetching result for pending_route_id: ${id}`)
 
   const pool = await getPool()
   const client = await pool.connect()
