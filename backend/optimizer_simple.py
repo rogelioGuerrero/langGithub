@@ -7,6 +7,7 @@ from backend import db
 from backend.logging_utils import setup_logging
 from backend.models import PendingPayload, Vehicle
 from backend.ors import get_duration_matrix
+from backend.ors_directions import get_duration_matrix_via_directions
 from backend.ors_fallback import get_duration_matrix_fallback
 from backend.solver import Node, VehicleSpec, solve_cvrptw
 
@@ -50,8 +51,13 @@ def main() -> None:
         try:
             duration_matrix = get_duration_matrix(locations_lonlat)
         except Exception as e:
-            logger.warning("ORS failed: %s", e)
-            duration_matrix = get_duration_matrix_fallback(locations_lonlat)
+            logger.warning("ORS matrix API failed: %s", e)
+            try:
+                # Try using directions API instead
+                duration_matrix = get_duration_matrix_via_directions(locations_lonlat)
+            except Exception as e2:
+                logger.warning("ORS directions API failed: %s", e2)
+                duration_matrix = get_duration_matrix_fallback(locations_lonlat)
 
         # Prepare solver data
         depot_node = Node(
