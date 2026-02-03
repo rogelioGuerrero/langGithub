@@ -13,6 +13,16 @@ from = "/api/dispatch"
 to = "/.netlify/functions/api-dispatch"
 status = 200
 
+[[redirects]]
+from = "/api/test-db"
+to = "/.netlify/functions/test-db"
+status = 200
+
+[[redirects]]
+from = "/api/seed-orders"
+to = "/.netlify/functions/seed-orders"
+status = 200
+
 # SPA catch-all - debe ir al final
 [[redirects]]
 from = "/*"
