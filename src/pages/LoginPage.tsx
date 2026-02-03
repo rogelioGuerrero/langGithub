@@ -36,6 +36,12 @@ export default function LoginPage() {
     setLoading(false)
   }
 
+  const handleDemoLogin = () => {
+    // Auto-login como planner para testing
+    login('planificador@demo.com', 'demo123', 'planner')
+    navigate('/planner')
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -110,6 +116,24 @@ export default function LoginPage() {
 
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+              </Button>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-slate-700" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-slate-900 px-2 text-slate-500">O</span>
+                </div>
+              </div>
+
+              <Button 
+                type="button" 
+                variant="secondary" 
+                className="w-full bg-green-600 hover:bg-green-700 text-white"
+                onClick={handleDemoLogin}
+              >
+                🚀 Modo Demo - Entrar como Planificador
               </Button>
 
               <div className="text-center">
