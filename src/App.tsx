@@ -1,14 +1,17 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, Link, useNavigate } from 'react-router-dom'
 import { useEffect, useRef, useState } from 'react'
 import { Button } from './components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card'
 import { InteractiveMap } from './components/InteractiveMap'
+import { AuthProvider, useAuth } from './context/AuthContext'
+import { ProtectedRoute } from './components/ProtectedRoute'
 
 // Páginas
 import OrderPage from './pages/OrderPage'
 import TrackOrderPage from './pages/TrackOrderPage'
 import { PlannerDashboard } from './pages/PlannerDashboard'
 import { DriverModule } from './pages/DriverModule'
+import LoginPage from './pages/LoginPage'
 
 type Point = {
   id: string
@@ -253,16 +256,47 @@ function RouteOptimizer() {
 
 // Home con navegación a módulos
 function Home() {
+  const { user, logout, isAuthenticated } = useAuth()
+  const navigate = useNavigate()
+
+  const handleRoleClick = (path: string, requiresAuth: boolean, role?: string) => {
+    if (requiresAuth && !isAuthenticated) {
+      navigate('/login')
+      return
+    }
+    if (requiresAuth && role && user?.role !== role) {
+      navigate('/login')
+      return
+    }
+    navigate(path)
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4">
       <div className="max-w-4xl mx-auto">
         <header className="text-center py-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent mb-4">
-            Sistema de Gestión de Entregas
-          </h1>
-          <p className="text-slate-400">
-            Selecciona el módulo que necesitas
-          </p>
+          <div className="flex justify-between items-center max-w-4xl mx-auto">
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent mb-4">
+                Sistema de Gestión de Entregas
+              </h1>
+              <p className="text-slate-400">
+                Selecciona el módulo que necesitas
+              </p>
+            </div>
+            {isAuthenticated && (
+              <div className="flex items-center gap-3">
+                <span className="text-slate-400">
+                  {user?.role === 'planner' && '🗺️ Planificador'}
+                  {user?.role === 'driver' && '🚗 Conductor'}
+                  {user?.role === 'customer' && '📋 Cliente'}
+                </span>
+                <Button variant="secondary" size="sm" onClick={logout}>
+                  Cerrar sesión
+                </Button>
+              </div>
+            )}
+          </div>
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -302,9 +336,13 @@ function Home() {
               <p className="text-slate-400 mb-4">
                 Gestiona pedidos, asigna conductores y optimiza rutas.
               </p>
-              <Link to="/planner">
-                <Button className="w-full" variant="secondary">Dashboard</Button>
-              </Link>
+              <Button 
+                className="w-full" 
+                variant="secondary"
+                onClick={() => handleRoleClick('/planner', true, 'planner')}
+              >
+                Dashboard
+              </Button>
             </CardContent>
           </Card>
 
@@ -316,9 +354,13 @@ function Home() {
               <p className="text-slate-400 mb-4">
                 Accede a tus rutas diarias y actualiza el estado de entregas.
               </p>
-              <Link to="/driver">
-                <Button className="w-full" variant="secondary">Mis Rutas</Button>
-              </Link>
+              <Button 
+                className="w-full" 
+                variant="secondary"
+                onClick={() => handleRoleClick('/driver', true, 'driver')}
+              >
+                Mis Rutas
+              </Button>
             </CardContent>
           </Card>
 
@@ -343,18 +385,35 @@ function Home() {
 
 export default function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/order" element={<OrderPage />} />
-        <Route path="/order/:orderId" element={<OrderPage />} />
-        <Route path="/track/:orderId" element={<TrackOrderPage />} />
-        <Route path="/track" element={<TrackOrderPage />} />
-        <Route path="/planner" element={<PlannerDashboard />} />
-        <Route path="/driver" element={<DriverModule />} />
-        <Route path="/optimizer" element={<RouteOptimizer />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/order" element={<OrderPage />} />
+          <Route path="/order/:orderId" element={<OrderPage />} />
+          <Route path="/track/:orderId" element={<TrackOrderPage />} />
+          <Route path="/track" element={<TrackOrderPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route 
+            path="/planner" 
+            element={
+              <ProtectedRoute allowedRoles={['planner']}>
+                <PlannerDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/driver" 
+            element={
+              <ProtectedRoute allowedRoles={['driver']}>
+                <DriverModule />
+              </ProtectedRoute>
+            } 
+          />
+          <Route path="/optimizer" element={<RouteOptimizer />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   )
 }
