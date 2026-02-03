@@ -153,10 +153,20 @@ export function InteractiveMap({ onPointsChange, onVehiclesChange, routeResult, 
         const end = stops[i + 1]
         
         try {
-          // Get real route from ORS Directions API
-          const routeUrl = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjFmZTAxMmU1MDk1NzRmMTY5NTJjM2U5Nzc4NDlhM2M2IiwiaCI6Im11cm11cjY0In0=&start=${start.lon},${start.lat}&end=${end.lon},${end.lat}`
+          // Get real route from ORS Directions API (POST con body JSON)
+          const ORS_API_KEY = import.meta.env.VITE_ORS_API_KEY || ''
+          const routeUrl = `https://api.openrouteservice.org/v2/directions/driving-car`
           
-          const resp = await fetch(routeUrl)
+          const resp = await fetch(routeUrl, {
+            method: 'POST',
+            headers: {
+              'Authorization': ORS_API_KEY,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              coordinates: [[start.lon, start.lat], [end.lon, end.lat]]
+            })
+          })
           if (resp.ok) {
             const data = await resp.json()
             const coordinates = data.features[0].geometry.coordinates

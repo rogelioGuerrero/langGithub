@@ -13,5 +13,11 @@ from = "/api/dispatch"
 to = "/.netlify/functions/api-dispatch"
 status = 200
 
+# SPA catch-all - debe ir al final
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200
+
 [functions]
 node_version = "18"
