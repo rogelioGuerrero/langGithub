@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { CustomerOrderForm } from '../components/CustomerOrderForm'
 import { ErrorDisplay } from '../components/ErrorDisplay'
 import { LoadingScreen } from '../components/Loading'
+import { useToast } from '../context/ToastContext'
 
 interface OrderData {
   customerName: string
@@ -23,6 +24,7 @@ interface OrderData {
 export default function OrderPage() {
   const { orderId } = useParams<{ orderId?: string }>()
   const navigate = useNavigate()
+  const { addToast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [orderData, setOrderData] = useState<Partial<OrderData> | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -75,17 +77,17 @@ export default function OrderPage() {
 
       const savedOrder = await response.json()
 
-      // Mostrar confirmación
-      alert(
-        `¡Pedido ${orderId ? 'actualizado' : 'creado'} con éxito!\n\n` +
-        `ID de seguimiento: ${savedOrder.id}\n` +
-        `Te enviaremos actualizaciones al ${data.customerPhone}`
+      addToast(
+        `¡Pedido ${orderId ? 'actualizado' : 'creado'} exitosamente! ID: ${savedOrder.id}`,
+        'success'
       )
 
       // Redirigir a página de seguimiento
       navigate(`/track/${savedOrder.id}`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error desconocido')
+      const errorMsg = err instanceof Error ? err.message : 'Error desconocido'
+      setError(errorMsg)
+      addToast(errorMsg, 'error')
     } finally {
       setIsSubmitting(false)
     }

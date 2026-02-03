@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { LoadingScreen } from '../components/Loading'
 import { ErrorDisplay } from '../components/ErrorDisplay'
+import { LiveDriverMap } from '../components/LiveDriverMap'
+import { useToast } from '../context/ToastContext'
 
 interface Delivery {
   id: string
@@ -28,6 +30,7 @@ interface DriverRoute {
 }
 
 export function DriverModule() {
+  const { addToast } = useToast()
   const [route, setRoute] = useState<DriverRoute | null>(null)
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lon: number } | null>(null)
   const [activeDelivery, setActiveDelivery] = useState<string | null>(null)
@@ -72,12 +75,14 @@ export function DriverModule() {
   const startDelivery = (deliveryId: string) => {
     setActiveDelivery(deliveryId)
     updateDeliveryStatus(deliveryId, 'in_progress')
+    addToast('Entrega iniciada. ¡Buen viaje!', 'success')
   }
 
   const completeDelivery = (deliveryId: string) => {
     updateDeliveryStatus(deliveryId, 'completed')
     setActiveDelivery(null)
-    fetchDriverRoute() // Actualizar lista
+    addToast('¡Entrega completada exitosamente!', 'success')
+    fetchDriverRoute()
   }
 
   const updateDeliveryStatus = async (deliveryId: string, status: string) => {
@@ -93,6 +98,7 @@ export function DriverModule() {
     } catch (error) {
       console.error('Error updating delivery status:', error)
       setError('Error al actualizar el estado de la entrega')
+      addToast('Error al actualizar el estado', 'error')
     }
   }
 
@@ -165,6 +171,16 @@ export function DriverModule() {
             </div>
           </div>
         </header>
+
+        {/* Mapa en tiempo real */}
+        <div className="mb-4">
+          <LiveDriverMap
+            deliveries={route.deliveries}
+            currentLocation={currentLocation}
+            activeDeliveryId={activeDelivery}
+            onDeliveryClick={(id) => setActiveDelivery(id)}
+          />
+        </div>
 
         {/* Lista de entregas */}
         <div className="space-y-3">

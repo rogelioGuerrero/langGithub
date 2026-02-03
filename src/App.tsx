@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card'
 import { InteractiveMap } from './components/InteractiveMap'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { ToastProvider } from './context/ToastContext'
 
 // Páginas
 import OrderPage from './pages/OrderPage'
@@ -386,34 +387,36 @@ function Home() {
 export default function App() {
   return (
     <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/order" element={<OrderPage />} />
-          <Route path="/order/:orderId" element={<OrderPage />} />
-          <Route path="/track/:orderId" element={<TrackOrderPage />} />
-          <Route path="/track" element={<TrackOrderPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route 
-            path="/planner" 
-            element={
-              <ProtectedRoute allowedRoles={['planner']}>
-                <PlannerDashboard />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/driver" 
-            element={
-              <ProtectedRoute allowedRoles={['driver']}>
-                <DriverModule />
-              </ProtectedRoute>
-            } 
-          />
-          <Route path="/optimizer" element={<RouteOptimizer />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Router>
+      <ToastProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/order" element={<OrderPage />} />
+            <Route path="/order/:orderId" element={<OrderPage />} />
+            <Route path="/track/:orderId" element={<TrackOrderPage />} />
+            <Route path="/track" element={<TrackOrderPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route 
+              path="/planner" 
+              element={
+                <ProtectedRoute allowedRoles={['planner']}>
+                  <PlannerDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/driver" 
+              element={
+                <ProtectedRoute allowedRoles={['driver']}>
+                  <DriverModule />
+                </ProtectedRoute>
+              } 
+            />
+            <Route path="/optimizer" element={<RouteOptimizer />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Router>
+      </ToastProvider>
     </AuthProvider>
   )
 }
