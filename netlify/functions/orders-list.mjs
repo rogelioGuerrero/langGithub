@@ -1,26 +1,39 @@
 // Listar pedidos - Netlify Function
 const { Pool } = require('pg');
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
-});
+const corsHeaders = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-headers': 'Content-Type',
+  'access-control-allow-methods': 'GET, OPTIONS',
+};
+
+function json(statusCode, body) {
+  return {
+    statusCode,
+    headers: { 'content-type': 'application/json', ...corsHeaders },
+    body: JSON.stringify(body),
+  };
+}
 
 exports.handler = async (event, context) => {
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
-    'Content-Type': 'application/json'
-  };
-
   if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers };
+    return { statusCode: 204, headers: corsHeaders, body: '' };
   }
 
   if (event.httpMethod !== 'GET') {
-    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
+    return json(405, { error: 'Method Not Allowed' });
   }
+
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    return json(500, { error: 'DATABASE_URL not configured' });
+  }
+
+  const pool = new Pool({
+    connectionString: databaseUrl,
+    ssl: { rejectUnauthorized: false },
+    max: 3,
+  });
 
   try {
     const params = event.queryStringParameters || {};
@@ -46,18 +59,12 @@ exports.handler = async (event, context) => {
 
     const result = await pool.query(query, values);
 
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify(result.rows)
-    };
+    return json(200, result.rows);
 
   } catch (error) {
-    console.error('Error:', error);
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ error: 'Error interno del servidor', details: error.message })
-    };
+    console.error('Database error:', error);
+    return json(500, { error: 'Database error', details: error.message });
+  } finally {
+    await pool.end();
   }
 };
