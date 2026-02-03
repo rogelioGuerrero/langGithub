@@ -4,8 +4,13 @@ publish = "dist"
 functions = "netlify/functions"
 
 [[redirects]]
-from = "/api/*"
-to = "/.netlify/functions/:splat"
+from = "/api/result"
+to = "/.netlify/functions/api-result"
+status = 200
+
+[[redirects]]
+from = "/api/dispatch"
+to = "/.netlify/functions/api-dispatch"
 status = 200
 
 [functions]
