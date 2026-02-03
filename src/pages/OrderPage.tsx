@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { CustomerOrderForm } from '../components/CustomerOrderForm'
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
-import { Button } from '../components/ui/button'
+import { ErrorDisplay } from '../components/ErrorDisplay'
+import { LoadingScreen } from '../components/Loading'
 
 interface OrderData {
   customerName: string
@@ -26,6 +26,7 @@ export default function OrderPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [orderData, setOrderData] = useState<Partial<OrderData> | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(!!orderId)
 
   useEffect(() => {
     if (orderId) {
@@ -36,7 +37,8 @@ export default function OrderPage() {
 
   const fetchOrder = async (id: string) => {
     try {
-      const response = await fetch(`/api/orders/${id}`)
+      setLoading(true)
+      const response = await fetch(`/.netlify/functions/orders-track/${id}`)
       if (!response.ok) {
         throw new Error('Pedido no encontrado')
       }
@@ -44,6 +46,8 @@ export default function OrderPage() {
       setOrderData(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar el pedido')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -52,7 +56,9 @@ export default function OrderPage() {
     setError(null)
 
     try {
-      const url = orderId ? `/api/orders/${orderId}` : '/api/orders'
+      const url = orderId 
+        ? `/.netlify/functions/orders-update/${orderId}` 
+        : '/.netlify/functions/orders-create'
       const method = orderId ? 'PUT' : 'POST'
 
       const response = await fetch(url, {
@@ -85,21 +91,18 @@ export default function OrderPage() {
     }
   }
 
+  if (loading) {
+    return <LoadingScreen message="Cargando pedido..." />
+  }
+
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-red-400">Error</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-slate-400 mb-4">{error}</p>
-            <Button onClick={() => navigate('/')} className="w-full">
-              Volver al inicio
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <ErrorDisplay
+        title="Error al cargar el pedido"
+        message={error}
+        onRetry={orderId ? () => fetchOrder(orderId) : undefined}
+        onBack={() => navigate('/')}
+      />
     )
   }
 
@@ -122,7 +125,7 @@ export default function OrderPage() {
         {/* Formulario */}
         <CustomerOrderForm
           orderId={orderId}
-          initialData={orderData}
+          initialData={orderData || undefined}
           onSubmit={handleSubmit}
           isSubmitting={isSubmitting}
         />

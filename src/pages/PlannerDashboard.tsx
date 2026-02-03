@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { DragDropContext, Droppable, Draggable, DropResult, DroppableProvided, DraggableProvided } from '@hello-pangea/dnd'
+import { LoadingScreen } from '../components/Loading'
+import { ErrorDisplay } from '../components/ErrorDisplay'
 
 interface Order {
   id: string
@@ -35,6 +37,7 @@ export function PlannerDashboard() {
   })
   const [selectedOrders, setSelectedOrders] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchOrders()
@@ -44,11 +47,17 @@ export function PlannerDashboard() {
 
   const fetchOrders = async () => {
     try {
-      const response = await fetch('/api/orders?status=all')
+      setLoading(true)
+      setError(null)
+      const response = await fetch('/.netlify/functions/orders-list?status=all')
+      if (!response.ok) {
+        throw new Error('Error al cargar pedidos')
+      }
       const data = await response.json()
       organizeOrdersByStatus(data)
     } catch (error) {
       console.error('Error fetching orders:', error)
+      setError(error instanceof Error ? error.message : 'Error al cargar pedidos')
     } finally {
       setLoading(false)
     }
@@ -88,13 +97,17 @@ export function PlannerDashboard() {
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
-      await fetch(`/api/orders/${orderId}/status`, {
+      const response = await fetch(`/.netlify/functions/orders-update/${orderId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
       })
+      if (!response.ok) {
+        throw new Error('Error al actualizar estado')
+      }
     } catch (error) {
       console.error('Error updating order status:', error)
+      setError('Error al actualizar el estado del pedido')
     }
   }
 
@@ -102,15 +115,20 @@ export function PlannerDashboard() {
     if (selectedOrders.length === 0) return
     
     try {
-      await fetch('/api/optimize', {
+      setError(null)
+      const response = await fetch('/.netlify/functions/dispatch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderIds: selectedOrders })
       })
+      if (!response.ok) {
+        throw new Error('Error al optimizar')
+      }
       setSelectedOrders([])
       fetchOrders()
     } catch (error) {
       console.error('Error optimizing orders:', error)
+      setError('Error al optimizar los pedidos')
     }
   }
 
@@ -134,10 +152,16 @@ export function PlannerDashboard() {
   }
 
   if (loading) {
+    return <LoadingScreen message="Cargando pedidos..." />
+  }
+
+  if (error) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-      </div>
+      <ErrorDisplay
+        title="Error"
+        message={error}
+        onRetry={fetchOrders}
+      />
     )
   }
 

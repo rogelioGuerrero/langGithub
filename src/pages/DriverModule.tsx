@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
+import { LoadingScreen } from '../components/Loading'
+import { ErrorDisplay } from '../components/ErrorDisplay'
 
 interface Delivery {
   id: string
@@ -30,6 +32,7 @@ export function DriverModule() {
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lon: number } | null>(null)
   const [activeDelivery, setActiveDelivery] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchDriverRoute()
@@ -50,11 +53,17 @@ export function DriverModule() {
 
   const fetchDriverRoute = async () => {
     try {
-      const response = await fetch('/api/driver/route')
+      setLoading(true)
+      setError(null)
+      const response = await fetch('/.netlify/functions/driver-route')
+      if (!response.ok) {
+        throw new Error('Error al cargar la ruta')
+      }
       const data = await response.json()
       setRoute(data)
     } catch (error) {
       console.error('Error fetching route:', error)
+      setError(error instanceof Error ? error.message : 'Error al cargar la ruta')
     } finally {
       setLoading(false)
     }
@@ -73,13 +82,17 @@ export function DriverModule() {
 
   const updateDeliveryStatus = async (deliveryId: string, status: string) => {
     try {
-      await fetch(`/api/driver/delivery/${deliveryId}/status`, {
+      const response = await fetch(`/.netlify/functions/orders-update/${deliveryId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
       })
+      if (!response.ok) {
+        throw new Error('Error al actualizar estado')
+      }
     } catch (error) {
       console.error('Error updating delivery status:', error)
+      setError('Error al actualizar el estado de la entrega')
     }
   }
 
@@ -94,10 +107,16 @@ export function DriverModule() {
   }
 
   if (loading) {
+    return <LoadingScreen message="Cargando tu ruta..." />
+  }
+
+  if (error) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-      </div>
+      <ErrorDisplay
+        title="Error"
+        message={error}
+        onRetry={fetchDriverRoute}
+      />
     )
   }
 

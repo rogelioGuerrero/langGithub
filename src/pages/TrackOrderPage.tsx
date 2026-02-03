@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
+import { ErrorDisplay } from '../components/ErrorDisplay'
+import { LoadingScreen } from '../components/Loading'
 
 interface TrackingInfo {
   id: string
@@ -63,7 +65,7 @@ export default function TrackOrderPage() {
 
   const fetchTrackingInfo = async (id: string) => {
     try {
-      const response = await fetch(`/api/orders/${id}/track`)
+      const response = await fetch(`/.netlify/functions/orders-track/${id}`)
       if (!response.ok) {
         throw new Error('Pedido no encontrado')
       }
@@ -99,31 +101,17 @@ export default function TrackOrderPage() {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p>Cargando información del pedido...</p>
-        </div>
-      </div>
-    )
+    return <LoadingScreen message="Cargando información del pedido..." />
   }
 
   if (error || !trackingInfo) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-red-400">Error</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-slate-400 mb-4">{error || 'Pedido no encontrado'}</p>
-            <Button onClick={() => navigate('/')} className="w-full">
-              Volver al inicio
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <ErrorDisplay
+        title="Error"
+        message={error || 'No se pudo cargar la información del pedido'}
+        onRetry={orderId ? () => fetchTrackingInfo(orderId) : undefined}
+        onBack={() => navigate('/')}
+      />
     )
   }
 
