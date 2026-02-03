@@ -25,8 +25,8 @@ export function RouteMap({ routes, depot }: Props) {
 
     const map = window.L.map(mapRef.current).setView([depot.lat, depot.lon], 12)
 
-    window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
+    window.L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors © CARTO',
     }).addTo(map)
 
     // Colors for different vehicles

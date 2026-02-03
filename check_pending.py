@@ -6,8 +6,8 @@ DATABASE_URL = "postgresql://neondb_owner:npg_ovJB0U4KWyHI@ep-twilight-darkness-
 conn = psycopg2.connect(DATABASE_URL)
 cur = conn.cursor()
 
-# Check specific pending_route
-pending_id = "33dc53fa-d409-421a-884f-8bbb214d5860"
+# Check specific pending_route (último de la UI)
+pending_id = "d3c725ff-2224-4378-bc47-4d63860f38a8"
 
 cur.execute("""
     select id::text, status, created_at, error

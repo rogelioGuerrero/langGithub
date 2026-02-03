@@ -51,8 +51,8 @@ export function InteractiveMap({ onPointsChange, onVehiclesChange, routeResult, 
 
     const leafletMap = window.L.map(mapRef.current).setView([depot.lat, depot.lon], 12)
 
-    window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
+    window.L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors © CARTO',
     }).addTo(leafletMap)
 
     setMap(leafletMap)

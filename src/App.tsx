@@ -1,7 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from './components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card'
 import { InteractiveMap } from './components/InteractiveMap'
+
+// Páginas
+import OrderPage from './pages/OrderPage'
+import TrackOrderPage from './pages/TrackOrderPage'
+import { PlannerDashboard } from './pages/PlannerDashboard'
+import { DriverModule } from './pages/DriverModule'
 
 type Point = {
   id: string
@@ -59,15 +66,15 @@ function toPayload(depot: Point, vehicles: Vehicle[], orders: Point[]) {
     vehicles: vehicles.map(v => ({
       id_vehicle: v.id,
       capacity_weight: v.capacity,
-      capacity_volume: v.capacity / 200, // Asumir 1kg = 0.005m³
+      capacity_volume: v.capacity / 200,
       skills: v.skills,
     })),
     orders: orders.map((o, idx) => ({
       id_pedido: o.name || `P-${idx + 1}`,
       lat: o.lat,
       lon: o.lon,
-      peso: 100, // Peso por defecto
-      volumen: 0.5, // Volumen por defecto
+      peso: 100,
+      volumen: 0.5,
       ventana_inicio: defaultDateTime(''),
       ventana_fin: defaultEndDateTime(''),
       skills_required: [],
@@ -75,7 +82,8 @@ function toPayload(depot: Point, vehicles: Vehicle[], orders: Point[]) {
   }
 }
 
-export default function App() {
+// Componente Optimizador de Rutas
+function RouteOptimizer() {
   const [points, setPoints] = useState<Point[]>([])
   const [vehicles, setVehicles] = useState<Vehicle[]>([
     { id: 'VAN-1', capacity: 800, skills: [] },
@@ -92,7 +100,7 @@ export default function App() {
   const [log, setLog] = useState<string[]>([])
   const [isCalculating, setIsCalculating] = useState(false)
 
-  const pollInterval = useRef<NodeJS.Timeout>()
+  const pollInterval = useRef<ReturnType<typeof setInterval> | null>(null)
 
   async function calculateRoutes() {
     if (points.length === 0) {
@@ -125,7 +133,6 @@ export default function App() {
         `github_dispatch=${dispatchData.github_dispatch}`,
       ])
 
-      // Start polling
       startPolling(dispatchData.pending_route_id)
     } catch (e) {
       setLog(prev => [...prev, `Error: ${e}`])
@@ -241,5 +248,113 @@ export default function App() {
         </Card>
       </div>
     </div>
+  )
+}
+
+// Home con navegación a módulos
+function Home() {
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-4">
+      <div className="max-w-4xl mx-auto">
+        <header className="text-center py-8">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent mb-4">
+            Sistema de Gestión de Entregas
+          </h1>
+          <p className="text-slate-400">
+            Selecciona el módulo que necesitas
+          </p>
+        </header>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card className="hover:border-blue-500 transition-colors cursor-pointer">
+            <CardHeader>
+              <CardTitle className="text-xl">📋 Solicitar Entrega</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-slate-400 mb-4">
+                ¿Eres cliente? Solicita una entrega completando el formulario.
+              </p>
+              <Link to="/order">
+                <Button className="w-full">Ir al Formulario</Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:border-green-500 transition-colors cursor-pointer">
+            <CardHeader>
+              <CardTitle className="text-xl">📦 Seguimiento</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-slate-400 mb-4">
+                Rastrea tu pedido y conoce el estado de tu entrega.
+              </p>
+              <Link to="/track/">
+                <Button className="w-full" variant="secondary">Rastrear Pedido</Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:border-purple-500 transition-colors cursor-pointer">
+            <CardHeader>
+              <CardTitle className="text-xl">🗺️ Planificador</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-slate-400 mb-4">
+                Gestiona pedidos, asigna conductores y optimiza rutas.
+              </p>
+              <Link to="/planner">
+                <Button className="w-full" variant="secondary">Dashboard</Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:border-orange-500 transition-colors cursor-pointer">
+            <CardHeader>
+              <CardTitle className="text-xl">🚗 Módulo Conductor</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-slate-400 mb-4">
+                Accede a tus rutas diarias y actualiza el estado de entregas.
+              </p>
+              <Link to="/driver">
+                <Button className="w-full" variant="secondary">Mis Rutas</Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:border-cyan-500 transition-colors cursor-pointer md:col-span-2">
+            <CardHeader>
+              <CardTitle className="text-xl">⚡ Optimizador de Rutas</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-slate-400 mb-4">
+                Herramienta avanzada para optimizar múltiples rutas con mapa interactivo.
+              </p>
+              <Link to="/optimizer">
+                <Button className="w-full" variant="secondary">Abrir Optimizador</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/order" element={<OrderPage />} />
+        <Route path="/order/:orderId" element={<OrderPage />} />
+        <Route path="/track/:orderId" element={<TrackOrderPage />} />
+        <Route path="/track" element={<TrackOrderPage />} />
+        <Route path="/planner" element={<PlannerDashboard />} />
+        <Route path="/driver" element={<DriverModule />} />
+        <Route path="/optimizer" element={<RouteOptimizer />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Router>
   )
 }
