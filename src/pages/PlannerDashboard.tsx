@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
+import { DragDropContext, Droppable, Draggable, DropResult, DroppableProvided, DraggableProvided } from '@hello-pangea/dnd'
 
 interface Order {
   id: string
@@ -69,7 +69,7 @@ export function PlannerDashboard() {
     setColumns(newColumns)
   }
 
-  const onDragEnd = (result: any) => {
+  const onDragEnd = (result: DropResult) => {
     if (!result.destination) return
     
     const { source, destination } = result
@@ -177,7 +177,7 @@ export function PlannerDashboard() {
                 </div>
                 
                 <Droppable droppableId={column.id}>
-                  {(provided) => (
+                  {(provided: DroppableProvided) => (
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
@@ -185,8 +185,8 @@ export function PlannerDashboard() {
                     >
                       {column.orders.map((order, index) => (
                         <Draggable key={order.id} draggableId={order.id} index={index}>
-                          {(provided) => (
-                            <Card
+                          {(provided: DraggableProvided) => (
+                            <div
                               ref={provided.innerRef}
                               {...provided.draggableProps}
                               {...provided.dragHandleProps}
@@ -197,7 +197,8 @@ export function PlannerDashboard() {
                               }`}
                               onClick={() => toggleOrderSelection(order.id)}
                             >
-                              <CardContent className="p-3">
+                              <Card>
+                                <CardContent className="p-3">
                                 <div className="flex items-start justify-between">
                                   <div className="flex-1">
                                     <p className="font-medium text-sm">{order.customerName}</p>
@@ -220,6 +221,7 @@ export function PlannerDashboard() {
                                 </div>
                               </CardContent>
                             </Card>
+                            </div>
                           )}
                         </Draggable>
                       ))}
